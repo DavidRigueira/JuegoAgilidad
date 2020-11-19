@@ -1,55 +1,72 @@
 let listaCirculos = []
-class Circulo{
-    constructor(x,y,r,color) {
+let aciertos = 0
+let fallos = 0
+let dificultad = 50
+let sonidoAzul
+let sonidoRojo
+class Circulo {
+    constructor(x,y,r,c) {
         this.x = x
         this.y = y
         this.r = r
-        this.color = color
+        this.c = c
     }
-    dibujar(){
-        fill(this.color)
+    dibujar() {
+        fill(this.c)
         circle(this.x, this.y, this.r*2)
     }
 }
-function generarCirculo(){
-    let color = Math.random()>0.5?'red':'blue'
+function generarCirculo() {
+    let c = Math.random()>0.5?'red':'blue'
     let x = numeroAleatorio(0, width)
     let y = numeroAleatorio(0, height)
-    let radio = 100
-    let nuevoCirculo = new Circulo(x,y,radio,color)
+    let r = numeroAleatorio(20, 50)
+    let nuevoCirculo = new Circulo(x,y,r,c)
     return nuevoCirculo
     
 }
-function numeroAleatorio(min, max){
+function numeroAleatorio(min, max) {
     return Math.round(Math.random() * (max-min) + min)
 }
-function setup(){
+function setup() {
+    listaCirculos = []
     createCanvas(400, 400)
-    let nuevoCirculo = generarCirculo()
-    listaCirculos.push(nuevoCirculo)
+    textSize(20)
+    sonidoAzul = loadSound('disparo_1.mp3')
+    sonidoRojo = loadSound('error-fallo 5.mp3')
 }
-function draw(){
+function draw() {
     background(220)
-    listaCirculos.forEach(circulo => {
-        circulo.dibujar()
-        colisionMouseCirculo(circulo.x, circulo.y, circulo)
+    if(frameCount % dificultad === 0) {
+        let nuevoCirculo = generarCirculo()
+        listaCirculos.push(nuevoCirculo)
+        if(dificultad >= 1){
+            dificultad-=1
+        }
+    }
+    listaCirculos.forEach(circulo => circulo.dibujar())
+    fill('black')
+    text(`Aciertos ${aciertos}`, 10, 20)
+    text(`Fallos ${fallos}`, 300, 20)
+
+    let listaFiltrada = listaCirculos.filter(circulo => circulo.c === 'blue')
+    if(listaFiltrada.length >= 5){
+        noLoop()
+        text('GAME OVER', width/2, height/2)
+    }
+}
+function colisionMouseCirculo(mx, my, circulo) {
+    let ca = circulo.x - mx
+    let cb = circulo.y - my
+    let h = Math.sqrt(ca*ca + cb*cb)
+    return h < circulo.r
+}
+function mousePressed() {
+    listaCirculos.forEach((circulo, indice) => {
+        if( colisionMouseCirculo(mouseX, mouseY, circulo) ) {
+           circulo.c === 'red' ? fallos++ : aciertos++
+           circulo.c === 'red' ? sonidoRojo.play() : sonidoAzul.play()
+           listaCirculos.splice(indice, 1)
+        }
     })
-}
-function colisionMouseCirculo(mx, my, circulo){
-    let raton = line(mx, 0, mx, 0)
-    circulo = line(0, my, 0, my)
-    let colision = Math.sqrt(Math.pow(raton, 2) + Math.pow(circulo, 2))
-    if(colision > 0){
-        return false
-    }else{
-        return true
-    }
-}
-function mousePressed(){
-    let value = 0
-    if(value === 0){
-        value = 255
-    }else{
-        value = 0
-    }
 }
